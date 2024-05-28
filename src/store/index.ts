@@ -3,7 +3,7 @@ import { proxy } from 'valtio';
 interface BlurRegion {
   x: number;
   y: number;
-  radius: number;
+  z: number;
 }
 
 interface Store {
