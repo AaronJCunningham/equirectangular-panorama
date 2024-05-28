@@ -2,3 +2,23 @@
   text-align: center;
   height: 100vh;
 }
+
+/* edit button */
+
+.edit-button {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  background-color: rgba(12,12,12,0.2);
+  color: white;
+  border: none;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  z-index: 1000; 
+}
+
+.edit-button:hover {
+  background-color: rgba(12,12,12,0.4);
+}
