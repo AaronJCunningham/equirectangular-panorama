@@ -1,5 +1,10 @@
 import { ShaderMaterial, Texture, BackSide } from 'three';
 
+/*This custom shader has two basic functions. 
+-it laods the low res texture then blends into the hd texture when that texture is loaded
+-it takes an array of 'blur regions and blurs those areas
+*/
+
 const vertexShader = `
   varying vec2 vUv;
   void main() {

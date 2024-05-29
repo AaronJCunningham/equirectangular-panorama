@@ -1,5 +1,7 @@
 import { proxy } from 'valtio';
 
+//valtio store to deal with state management
+
 interface BlurRegion {
   x: number;
   y: number;

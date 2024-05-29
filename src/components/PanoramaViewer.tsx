@@ -6,6 +6,9 @@ import { useSnapshot } from 'valtio';
 import store from '../store';
 import useLocalStorage from '../hooks/useLocalStorage';
 
+/*loads the image and has onDoubleClick functionality to add blur regions
+*/
+
 const lowResTextureUrl = "/images/pano_small.jpg";
 const highResTextureUrl = "/images/pano.jpg";
 
@@ -51,8 +54,7 @@ const PanoramaViewer: React.FC = () => {
     [snap.blurRegions]
   );
 
-  console.log("blurRegions", blurRegions); // Log the blur regions
-
+//loads shader material
   const material = useMemo(() => {
     if (lowResTexture) {
       return PanoramaShaderMaterial(lowResTexture, highResTexture, blendFactorRef.current, blurRegions);
@@ -65,6 +67,7 @@ const PanoramaViewer: React.FC = () => {
     mesh.material = material;
   }
 
+//this converts the world coordinates to uv coordinates for the shader.
   const convertWorldToUV = (point: Vector3) => {
     const spherical = new Spherical().setFromVector3(point);
     const u = 0.5 - (Math.atan2(point.z, point.x) / (2 * Math.PI));
@@ -72,6 +75,7 @@ const PanoramaViewer: React.FC = () => {
     return new Vector2(u, v);
   };
 
+  //converts clicks into world coordinates
   const handleClick = (event: MouseEvent) => {
     if (!store.editMode) return;
 
@@ -92,12 +96,12 @@ const PanoramaViewer: React.FC = () => {
         const newRegion = { x: uv.x, y: uv.y, z: 0 };
         store.blurRegions.push(newRegion);
         setBlurStorage([...blurStorage, newRegion]); // Update localStorage
-        console.log("Added UV point:", uv); // Log the added point
-        console.log("Updated blur regions:", store.blurRegions); // Log the updated blur regions
+     
       }
     }
   };
 
+  //updates the shader
   useFrame(() => {
     if (highResLoaded && blendFactorRef.current < 1) {
       blendFactorRef.current = Math.min(blendFactorRef.current + 0.01, 1);

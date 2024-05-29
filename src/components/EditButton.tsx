@@ -9,6 +9,9 @@ type BlurRegion = {
   z: number;
 };
 
+//two buttons for edit mode and to reset the blur regions
+
+
 const EditButton: React.FC = () => {
   const snap = useSnapshot(store);
   const [blurStorage, setBlurStorage] = useLocalStorage<BlurRegion[]>('regions', []);

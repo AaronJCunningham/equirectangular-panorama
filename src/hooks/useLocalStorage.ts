@@ -1,5 +1,7 @@
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 
+//custom hook to store blur regions to localstorage. I wanted to simulate a backend for the sake of the assignment
+
 type SetValue<T> = Dispatch<SetStateAction<T>>;
 
 const useLocalStorage = <T,>(key: string, initialValue: T): [T, SetValue<T>] => {
