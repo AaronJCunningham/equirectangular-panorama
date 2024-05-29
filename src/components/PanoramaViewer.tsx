@@ -41,11 +41,14 @@ const PanoramaViewer: React.FC = () => {
 
   console.log("blurRegions", blurRegions); // Log the blur regions
 
-  const material = useMemo(
-    () => lowResTexture && highResTexture && PanoramaShaderMaterial(lowResTexture, highResTexture, blendFactorRef.current, blurRegions),
-    [lowResTexture, highResTexture, blurRegions]
-  );
+  const material = useMemo(() => {
+    if (lowResTexture) {
+      return PanoramaShaderMaterial(lowResTexture, highResTexture, blendFactorRef.current, blurRegions);
+    }
+    return null;
+  }, [lowResTexture, highResTexture, blurRegions]);
 
+  // Ensure the material is applied only when it is defined
   if (material) {
     mesh.material = material;
   }
@@ -88,11 +91,13 @@ const PanoramaViewer: React.FC = () => {
         material.uniforms.blendFactor.value = blendFactorRef.current;
         material.uniforms.blurRegions.value = blurRegions;
         material.uniforms.numBlurRegions.value = blurRegions.length / 3;
+        material.uniforms.highResTexture.value = highResTexture || lowResTexture; // Update texture dynamically
+        material.uniforms.highResTextureAvailable.value = highResTexture !== null; // Update availability flag
       }
     }
   });
 
-  return <primitive ref={sphereRef as MutableRefObject<Mesh>} object={mesh} onClick={handleClick} />;
+  return <primitive ref={sphereRef as MutableRefObject<Mesh>} object={mesh} onDoubleClick={handleClick} />;
 };
 
 export default PanoramaViewer;

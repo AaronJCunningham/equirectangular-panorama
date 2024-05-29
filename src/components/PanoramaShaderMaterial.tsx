@@ -14,7 +14,9 @@ const fragmentShader = `
   uniform float blendFactor;
   uniform float blurRegions[30]; // Support up to 10 blur regions (each with 3 components)
   uniform int numBlurRegions;
-  const float blurRadius = 0.03; // Increased blur radius
+  uniform bool highResTextureAvailable; // Flag to indicate if high-res texture is available
+  const float blurRadius = 0.03; // Keeping the original blur radius
+  const float aspectRatio = 2.0; // Hardcoded aspect ratio
 
   varying vec2 vUv;
 
@@ -30,50 +32,51 @@ const fragmentShader = `
     return blurFactor;
   }
 
-  vec4 applyGaussianBlur(sampler2D tex, vec2 uv, float radius) {
+  vec4 applyBoxBlur(sampler2D tex, vec2 uv, float radius) {
     vec4 color = vec4(0.0);
-    float totalWeight = 0.0;
-    float weight;
-    float offsets[7] = float[](0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
-    float kernel[7] = float[](0.204164, 0.304005, 0.186192, 0.098788, 0.034101, 0.009307, 0.001443);
-
-    for (int i = 0; i < 7; i++) {
-      weight = kernel[i];
-      color += texture2D(tex, uv + vec2(radius * offsets[i], 0.0)) * weight;
-      color += texture2D(tex, uv - vec2(radius * offsets[i], 0.0)) * weight;
-      totalWeight += 2.0 * weight;
+    int blurSize = 10;
+    float totalSamples = float((blurSize * 2 + 1) * (blurSize * 2 + 1));
+    
+    for (int x = -blurSize; x <= blurSize; x++) {
+      for (int y = -blurSize; y <= blurSize; y++) {
+        vec2 offset = vec2(float(x) * radius / float(blurSize), float(y) * radius / float(blurSize) / aspectRatio);
+        color += texture2D(tex, uv + offset);
+      }
     }
 
-    for (int i = 0; i < 7; i++) {
-      weight = kernel[i];
-      color += texture2D(tex, uv + vec2(0.0, radius * offsets[i])) * weight;
-      color += texture2D(tex, uv - vec2(0.0, radius * offsets[i])) * weight;
-      totalWeight += 2.0 * weight;
-    }
-
-    return color / totalWeight;
+    return color / totalSamples;
   }
 
   void main() {
     vec4 lowResColor = texture2D(lowResTexture, vUv);
-    vec4 highResColor = texture2D(highResTexture, vUv);
+    vec4 highResColor = vec4(0.0);
+
+    if (highResTextureAvailable) {
+      highResColor = texture2D(highResTexture, vUv);
+    }
+
     vec4 color = mix(lowResColor, highResColor, blendFactor);
 
     float blurFactor = getBlurFactor(vUv);
     if (blurFactor > 0.0) {
-      vec4 blurredColor = applyGaussianBlur(highResTexture, vUv, blurRadius);
-      vec4 greyColor = vec4(0.8, 0.8, 0.8, 05); // Light grey color
+      vec4 blurredColor = lowResColor;
+      if (highResTextureAvailable) {
+        blurredColor = applyBoxBlur(highResTexture, vUv, blurRadius);
+      } else {
+        blurredColor = applyBoxBlur(lowResTexture, vUv, blurRadius);
+      }
       color = mix(color, blurredColor, blurFactor);
-      color = mix(color, greyColor, blurFactor * 0.5); // Mix with grey color
     }
 
     gl_FragColor = color;
   }
 `;
 
+
+
 const PanoramaShaderMaterial = (
   lowResTexture: Texture,
-  highResTexture: Texture,
+  highResTexture: Texture | null,
   blendFactor: number,
   blurRegions: number[]
 ) => {
@@ -84,6 +87,7 @@ const PanoramaShaderMaterial = (
       blendFactor: { value: blendFactor },
       blurRegions: { value: blurRegions },
       numBlurRegions: { value: blurRegions.length / 3 }, // Each region has 3 components
+      highResTextureAvailable: { value: highResTexture !== null } // Flag for high-res texture availability
     },
     vertexShader,
     fragmentShader,
@@ -92,3 +96,4 @@ const PanoramaShaderMaterial = (
 };
 
 export default PanoramaShaderMaterial;
+
