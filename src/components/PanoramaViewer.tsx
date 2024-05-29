@@ -4,9 +4,16 @@ import { TextureLoader, SphereGeometry, Mesh, Vector2, Raycaster, Texture, Vecto
 import PanoramaShaderMaterial from './PanoramaShaderMaterial';
 import { useSnapshot } from 'valtio';
 import store from '../store';
+import useLocalStorage from '../hooks/useLocalStorage';
 
 const lowResTextureUrl = "/images/pano_small.jpg";
 const highResTextureUrl = "/images/pano.jpg";
+
+type BlurRegion = {
+  x: number;
+  y: number;
+  z: number;
+};
 
 const PanoramaViewer: React.FC = () => {
   const snap = useSnapshot(store);
@@ -17,9 +24,14 @@ const PanoramaViewer: React.FC = () => {
   const [highResLoaded, setHighResLoaded] = useState(false);
   const sphereRef = useRef<Mesh>();
 
-  useEffect(() => {
-    const textureLoader = new TextureLoader();
+  // Initialize blurRegions from localStorage
+  const [blurStorage, setBlurStorage] = useLocalStorage<BlurRegion[]>("regions", []);
 
+  useEffect(() => {
+    // Set the initial blurRegions in the store
+    store.blurRegions = blurStorage;
+
+    const textureLoader = new TextureLoader();
     textureLoader.load(lowResTextureUrl, (texture) => {
       setLowResTexture(texture);
     });
@@ -30,7 +42,7 @@ const PanoramaViewer: React.FC = () => {
     });
   }, []);
 
-  const geometry = useMemo(() => new SphereGeometry(100, 60, 40), []);
+  const geometry = useMemo(() => new SphereGeometry(8, 60, 40), []);
   const mesh = useMemo(() => new Mesh(geometry), [geometry]);
 
   // Convert blur regions from store to flat array
@@ -61,7 +73,7 @@ const PanoramaViewer: React.FC = () => {
   };
 
   const handleClick = (event: MouseEvent) => {
-    if (!snap.editMode) return;
+    if (!store.editMode) return;
 
     const rect = gl.domElement.getBoundingClientRect();
     const mouse = new Vector2(
@@ -77,7 +89,9 @@ const PanoramaViewer: React.FC = () => {
       if (intersects.length > 0) {
         const point = intersects[0].point;
         const uv = convertWorldToUV(point);
-        store.blurRegions.push({ x: uv.x, y: uv.y, z: 0 });
+        const newRegion = { x: uv.x, y: uv.y, z: 0 };
+        store.blurRegions.push(newRegion);
+        setBlurStorage([...blurStorage, newRegion]); // Update localStorage
         console.log("Added UV point:", uv); // Log the added point
         console.log("Updated blur regions:", store.blurRegions); // Log the updated blur regions
       }

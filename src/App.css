@@ -5,20 +5,25 @@
 
 /* edit button */
 
-.edit-button {
+.button-container {
   position: absolute;
   bottom: 1rem;
   right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+.edit-button, .reset-button {
   padding: 1rem 1.5rem;
   font-size: 1rem;
-  background-color: rgba(12,12,12,0.2);
+  background-color: rgba(12, 12, 12, 0.2);
   color: white;
   border: none;
   border-radius: 0.4rem;
   cursor: pointer;
-  z-index: 1000; 
 }
 
-.edit-button:hover {
-  background-color: rgba(12,12,12,0.4);
+.edit-button:hover, .reset-button:hover {
+  background-color: rgba(12, 12, 12, 0.4);
 }
